@@ -1,0 +1,263 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="hero text-center">
+
+    <h1 class="display-3 fw-bold">
+        Битва Институтов
+    </h1>
+
+    <p class="lead mt-3">
+        Спортивная лига университета
+    </p>
+
+</div>
+
+<h1 class="mb-4">
+    Таблица лиги
+</h1>
+
+<table class="table table-striped">
+
+    <thead>
+
+        <tr>
+            <th>#</th>
+            <th>Институт</th>
+            <th>Очки</th>
+        </tr>
+
+    </thead>
+
+    <tbody id="institutes-table">
+
+    {% for institute in institutes %}
+
+        <tr>
+
+            <td>{{ loop.index }}</td>
+
+            <td>
+                {% if institute.logo %}
+
+                <img
+                    src="{{ url_for('static',filename='uploads/' + institute.logo) }}"
+                    width="40"
+                    height="40"
+                    class="rounded me-2"
+                 alt="">
+
+                {% endif %}
+                {{ institute.name }}
+            </td>
+
+            <td>{{ institute.points }}</td>
+
+        </tr>
+
+    {% endfor %}
+
+    </tbody>
+
+</table>
+
+<div class="mb-4">
+
+{% for s in sports %}
+
+<button
+    class="btn btn-dark sport-button"
+    data-sport="{{ s.name }}"
+>
+
+    {{ s.name }}
+
+</button>
+
+{% endfor %}
+
+</div>
+
+<h2 class="mt-5">
+    Команды
+</h2>
+
+<div class="row" id="teams-list">
+
+{% for team in teams %}
+
+<div class="col-md-4">
+
+    <div class="card mb-3">
+
+        <div class="card-body">
+
+            <h5>
+                {{ team.name }}
+            </h5>
+
+            <p>
+                Спорт: {{ team.sport }}
+            </p>
+
+            <p>
+                Институт: {{ team.institute.name }}
+            </p>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endfor %}
+
+</div>
+
+<h2 class="mt-5">
+    Ближайшие матчи
+</h2>
+
+<div class="row" id="matches-list">
+
+{% for match in matches %}
+
+<div class="col-md-6">
+
+    <div class="card mb-3">
+
+        <div class="card-body">
+
+        <div class="d-flex justify-content-between">
+
+            <div>
+                <h5>
+                    {{ match.team1.name }}
+                </h5>
+            </div>
+
+            <div>
+                VS
+            </div>
+
+            <div>
+                <h5>
+                    {{ match.team2.name }}
+                </h5>
+            </div>
+
+        </div>
+
+        <hr>
+
+        <p>
+            {{ match.sport }}
+        </p>
+
+        <p>
+            {{ match.date }}
+        </p>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endfor %}
+
+</div>
+
+<h2 class="mt-5 mb-4">
+   Топ игроки
+</h2>
+
+<div class="row" id="players-list">
+
+{% for player in players %}
+
+<div class="col-md-4">
+
+    <div class="card mb-3">
+
+        <div class="card-body">
+
+            <h5>
+                {{ player.name }}
+            </h5>
+
+            <p>
+                Команда:
+                {{ player.team.name }}
+            </p>
+
+            <p>
+                Голы:
+                {{ player.goals }}
+            </p>
+
+        </div>
+    </div>
+
+</div>
+
+{% endfor %}
+
+</div>
+
+<h2 class="mt-5">
+    Таблица
+</h2>
+
+<table class="table">
+
+    <thead>
+
+        <tr>
+
+            <th>#</th>
+            <th>Команда</th>
+            <th>W</th>
+            <th>D</th>
+            <th>L</th>
+            <th>PTS</th>
+
+        </tr>
+
+    </thead>
+
+    <tbody id="teams-table">
+
+    {% for team in teams %}
+
+        <tr>
+
+            <td>{{ loop.index }}</td>
+
+            <td>{{ team.name }}</td>
+
+            <td>{{ team.wins }}</td>
+
+            <td>{{ team.draws }}</td>
+
+            <td>{{ team.losses }}</td>
+
+            <td>
+                <strong>
+                    {{ team.points }}
+                </strong>
+            </td>
+
+        </tr>
+
+    {% endfor %}
+
+    </tbody>
+
+</table>
+
+</div>
+
+{% endblock %}
+
