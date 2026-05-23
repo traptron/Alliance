@@ -9,7 +9,7 @@ from flask_login import LoginManager
 db = SQLAlchemy()
 
 admin_site = Admin(
-    name="Battle Admin"
+    name="ССК Альянс Admin"
 )
 
 login_manager = LoginManager()
@@ -29,25 +29,19 @@ def create_app():
     login_manager.login_view = "main.login"
 
     # импорт моделей
-    from .models import (
-        Institute,
-        Team,
-        Player,
-        Match,
-        Sport
-    )
+    from .models import Team, Player, Match, Sport, Tournament
 
     # Flask-Admin
 
-    from .admin import AdminModelView, InstituteAdminView, MatchAdminView
+    from .admin import AdminModelView, TeamAdminView, MatchAdminView, TournamentAdminView
 
     admin_site.init_app(app)
 
-    admin_site.add_view(InstituteAdminView(Institute, db.session))
-
-    admin_site.add_view(AdminModelView(Team, db.session))
+    admin_site.add_view(TeamAdminView(Team, db.session))
 
     admin_site.add_view(AdminModelView(Player, db.session))
+
+    admin_site.add_view(TournamentAdminView(Tournament, db.session))
 
     admin_site.add_view(MatchAdminView(Match, db.session))
 

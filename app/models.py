@@ -1,11 +1,13 @@
+from datetime import datetime
+
 from . import db
 from flask_login import UserMixin
 
 # =========================
-# Institute
+# Sport
 # =========================
 
-class Institute(db.Model):
+class Sport(db.Model):
 
     id = db.Column(
         db.Integer,
@@ -13,31 +15,57 @@ class Institute(db.Model):
     )
 
     name = db.Column(
-        db.String(100),
+        db.String(50),
+        unique=True,
         nullable=False
     )
 
-    points = db.Column(
-        db.Integer,
-        default=0
-    )
-
-    # связь с командами
-    teams = db.relationship(
-        "Team",
-        backref="institute",
-        lazy=True
-    )
-
-    logo = db.Column(
-        db.String(200)
-    )
-
-    def __repr__(self):
-        return self.name
-
     def __str__(self):
         return self.name
+
+# =========================
+# Tournament
+# =========================
+
+class Tournament(db.Model):
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True
+    )
+
+    name = db.Column(
+        db.String(120),
+        nullable=False
+    )
+
+    sport_id = db.Column(
+        db.Integer,
+        db.ForeignKey("sport.id"),
+        nullable=False
+    )
+
+    season = db.Column(
+        db.String(50)
+    )
+
+    status = db.Column(
+        db.String(50),
+        default="active"
+    )
+
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow
+    )
+
+    sport = db.relationship(
+        "Sport",
+        backref="tournaments"
+    )
+
+    def __str__(self):
+        return f"{self.name} ({self.season})" if self.season else self.name
 
 # =========================
 # Team
@@ -55,6 +83,10 @@ class Team(db.Model):
         nullable=False
     )
 
+    logo = db.Column(
+        db.String(200)
+    )
+
     sport_id = db.Column(
         db.Integer,
         db.ForeignKey("sport.id"),
@@ -66,10 +98,15 @@ class Team(db.Model):
         backref="teams"
     )
 
-    institute_id = db.Column(
+    tournament_id = db.Column(
         db.Integer,
-        db.ForeignKey("institute.id"),
+        db.ForeignKey("tournament.id"),
         nullable=False
+    )
+
+    tournament = db.relationship(
+        "Tournament",
+        backref="teams"
     )
 
     # связь с игроками
@@ -100,10 +137,10 @@ class Team(db.Model):
     )
 
     def __repr__(self):
-        return f"{self.name} ({self.sport})"
+        return self.name
 
     def __str__(self):
-        return f"{self.name} ({self.sport})"
+        return self.name
 
 # =========================
 # Player
@@ -165,6 +202,17 @@ class Match(db.Model):
         backref="matches"
     )
 
+    tournament_id = db.Column(
+        db.Integer,
+        db.ForeignKey("tournament.id"),
+        nullable=False
+    )
+
+    tournament = db.relationship(
+        "Tournament",
+        backref="matches"
+    )
+
     date = db.Column(
         db.String(50)
     )
@@ -205,7 +253,9 @@ class Match(db.Model):
     )
 
     def __str__(self):
-        return f"{self.sport}: {self.team1_id} vs {self.team2_id}"
+        team1 = self.team1.name if self.team1 else "TBD"
+        team2 = self.team2.name if self.team2 else "TBD"
+        return f"{team1} vs {team2}"
 
 # =========================
 # User
@@ -231,23 +281,3 @@ class User(UserMixin, db.Model):
 
     def __str__(self):
         return self.username
-
-# =========================
-# Sport
-# =========================
-
-class Sport(db.Model):
-
-    id = db.Column(
-        db.Integer,
-        primary_key=True
-    )
-
-    name = db.Column(
-        db.String(50),
-        unique=True,
-        nullable=False
-    )
-
-    def __str__(self):
-        return self.name

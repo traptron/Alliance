@@ -1,14 +1,14 @@
-# Battle Site
+# ССК Альянс
 
-Web app for managing a university sports league. Built with Flask, Flask-Admin, and SQLAlchemy.
+Web app for managing a student sports club league. Built with Flask, Flask-Admin, and SQLAlchemy.
 
 ## Русский
 
-Веб-приложение для управления университетской спортивной лигой. Используются Flask, Flask-Admin и SQLAlchemy.
+Веб-приложение для управления студенческим спортивным клубом. Используются Flask, Flask-Admin и SQLAlchemy.
 
 ### Возможности
 
-- Таблица лиги по институтам
+- Таблица лиги по командам
 - Команды, матчи и топ игроков по виду спорта
 - Админ-панель для управления контентом
 - JSON API для данных по спорту
@@ -64,7 +64,7 @@ $env:SECRET_KEY = "change-me"
 
 ## Features
 
-- League table by institute
+- League table by team
 - Teams, matches, and top players per sport
 - Admin panel for content management
 - JSON API for sport data
@@ -117,25 +117,39 @@ Default credentials (from `create_admin.py`):
 
 ## API
 
-Get data for a sport:
+Get data for a tournament:
 
 ```
-GET /api/sport/<sport_name>
+GET /api/tournament/<tournament_id>
 ```
 
 Response:
 
 ```json
 {
+  "tournament": {
+    "id": 1,
+    "name": "Alliance League",
+    "season": "2026",
+    "status": "active",
+    "sport": "Football"
+  },
+  "standings": [
+    {
+      "name": "Team A",
+      "logo": null,
+      "wins": 3,
+      "draws": 1,
+      "losses": 0,
+      "points": 10,
+      "goal_difference": 6
+    }
+  ],
   "teams": [
     {
       "name": "Team A",
       "sport": "Football",
-      "institute": "Institute 1",
-      "wins": 3,
-      "draws": 1,
-      "losses": 0,
-      "points": 10
+      "logo": null
     }
   ],
   "matches": [
