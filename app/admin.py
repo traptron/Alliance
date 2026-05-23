@@ -15,7 +15,7 @@ class AdminModelView(ModelView):
         return current_user.is_authenticated
 
 
-class InstituteAdminView(AdminModelView):
+class TeamAdminView(AdminModelView):
 
     form_extra_fields = {
 
@@ -40,3 +40,7 @@ class MatchAdminView(AdminModelView):
         if model.status == "finished":
 
             update_match_result(model)
+
+
+class TournamentAdminView(AdminModelView):
+    pass

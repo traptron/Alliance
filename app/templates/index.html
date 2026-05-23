@@ -5,18 +5,48 @@
 <div class="hero text-center">
 
     <h1 class="display-3 fw-bold">
-        Битва Институтов
+        ССК Альянс
     </h1>
 
     <p class="lead mt-3">
-        Спортивная лига университета
+        Студенческий спортивный клуб
     </p>
 
 </div>
 
-<h1 class="mb-4">
-    Таблица лиги
-</h1>
+<div class="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-4">
+
+    <div>
+        <h1 class="mb-1">
+            Турнирная таблица
+        </h1>
+
+        <p class="text-muted mb-0">
+            Турнир: <span id="tournament-name">{{ tournament.name if tournament else "—" }}</span>
+        </p>
+
+        <p class="text-muted mb-0">
+            Сезон: <span id="tournament-season">{{ tournament.season if tournament else "—" }}</span>
+            · Статус: <span id="tournament-status">{{ tournament.status if tournament else "—" }}</span>
+            · Вид спорта: <span id="tournament-sport">{{ tournament.sport.name if tournament and tournament.sport else "—" }}</span>
+        </p>
+    </div>
+
+    <div style="min-width: 260px;">
+        <label class="form-label mb-1" for="tournament-select">
+            Выбор турнира
+        </label>
+
+        <select class="form-select" id="tournament-select">
+            {% for t in tournaments %}
+            <option value="{{ t.id }}" {% if tournament and t.id == tournament.id %}selected{% endif %}>
+                {{ t.name }}{% if t.season %} · {{ t.season }}{% endif %}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+
+</div>
 
 <table class="table table-striped">
 
@@ -24,35 +54,35 @@
 
         <tr>
             <th>#</th>
-            <th>Институт</th>
+            <th>Команда</th>
             <th>Очки</th>
         </tr>
 
     </thead>
 
-    <tbody id="institutes-table">
+    <tbody id="league-teams-table">
 
-    {% for institute in institutes %}
+    {% for row in standings %}
 
         <tr>
 
             <td>{{ loop.index }}</td>
 
             <td>
-                {% if institute.logo %}
+                {% if row.team.logo %}
 
                 <img
-                    src="{{ url_for('static',filename='uploads/' + institute.logo) }}"
+                    src="{{ url_for('static',filename='uploads/' + row.team.logo) }}"
                     width="40"
                     height="40"
                     class="rounded me-2"
                  alt="">
 
                 {% endif %}
-                {{ institute.name }}
+                {{ row.team.name }}
             </td>
 
-            <td>{{ institute.points }}</td>
+            <td>{{ row.points }}</td>
 
         </tr>
 
@@ -61,23 +91,6 @@
     </tbody>
 
 </table>
-
-<div class="mb-4">
-
-{% for s in sports %}
-
-<button
-    class="btn btn-dark sport-button"
-    data-sport="{{ s.name }}"
->
-
-    {{ s.name }}
-
-</button>
-
-{% endfor %}
-
-</div>
 
 <h2 class="mt-5">
     Команды
@@ -98,11 +111,7 @@
             </h5>
 
             <p>
-                Спорт: {{ team.sport }}
-            </p>
-
-            <p>
-                Институт: {{ team.institute.name }}
+                Спорт: {{ tournament.sport.name if tournament and tournament.sport else "—" }}
             </p>
 
         </div>
@@ -222,6 +231,7 @@
             <th>D</th>
             <th>L</th>
             <th>PTS</th>
+            <th>GD</th>
 
         </tr>
 
@@ -229,25 +239,27 @@
 
     <tbody id="teams-table">
 
-    {% for team in teams %}
+    {% for row in standings %}
 
         <tr>
 
             <td>{{ loop.index }}</td>
 
-            <td>{{ team.name }}</td>
+            <td>{{ row.team.name }}</td>
 
-            <td>{{ team.wins }}</td>
+            <td>{{ row.wins }}</td>
 
-            <td>{{ team.draws }}</td>
+            <td>{{ row.draws }}</td>
 
-            <td>{{ team.losses }}</td>
+            <td>{{ row.losses }}</td>
 
             <td>
                 <strong>
-                    {{ team.points }}
+                    {{ row.points }}
                 </strong>
             </td>
+
+            <td>{{ row.goal_difference }}</td>
 
         </tr>
 

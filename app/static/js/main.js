@@ -2,42 +2,120 @@ document.addEventListener(
     "DOMContentLoaded",
     () => {
 
-        const buttons = document.querySelectorAll(
-            ".sport-button"
+        const tournamentSelect = document.getElementById(
+            "tournament-select"
         )
 
-        buttons.forEach(button => {
+        if (!tournamentSelect) {
+            return
+        }
 
-            button.addEventListener(
-                "click",
-                async () => {
+        tournamentSelect.addEventListener(
+            "change",
+            async event => {
 
-                    const sport =
-                        button.dataset.sport
+                const tournamentId = event.target.value
 
-                    const response =
-                        await fetch(
-                            `/api/sport/${sport}`
-                        )
+                const response = await fetch(
+                    `/api/tournament/${tournamentId}`
+                )
 
-                    const data =
-                        await response.json()
+                const data = await response.json()
 
-                    updateTeamCards(data.teams)
-
-                    updateTeams(data.teams)
-
-                    updateMatches(data.matches)
-
-                    updatePlayers(data.players)
+                if (data.error) {
+                    return
                 }
-            )
-        })
+
+                updateTournamentMeta(data.tournament)
+                updateLeagueTable(data.standings)
+                updateStandingsTable(data.standings)
+                updateTeamCards(data.teams)
+                updateMatches(data.matches)
+                updatePlayers(data.players)
+
+                const url = new URL(window.location.href)
+                url.searchParams.set("tournament", tournamentId)
+                window.history.replaceState({}, "", url)
+            }
+        )
     }
 )
 
 
-function updateTeams(teams) {
+function updateTournamentMeta(tournament) {
+
+    const name = document.getElementById(
+        "tournament-name"
+    )
+
+    const season = document.getElementById(
+        "tournament-season"
+    )
+
+    const status = document.getElementById(
+        "tournament-status"
+    )
+
+    const sport = document.getElementById(
+        "tournament-sport"
+    )
+
+    if (name) {
+        name.textContent = tournament.name || "—"
+    }
+
+    if (season) {
+        season.textContent = tournament.season || "—"
+    }
+
+    if (status) {
+        status.textContent = tournament.status || "—"
+    }
+
+    if (sport) {
+        sport.textContent = tournament.sport || "—"
+    }
+}
+
+
+function updateLeagueTable(standings) {
+
+    const table = document.getElementById(
+        "league-teams-table"
+    )
+
+    if (!table) {
+        return
+    }
+
+    table.innerHTML = ""
+
+    standings.forEach((row, index) => {
+
+        const logoMarkup = row.logo
+            ? `<img src="/static/uploads/${row.logo}" width="40" height="40" class="rounded me-2" alt="">`
+            : ""
+
+        table.innerHTML += `
+
+            <tr>
+
+                <td>${index + 1}</td>
+
+                <td>
+                    ${logoMarkup}
+                    ${row.name}
+                </td>
+
+                <td>${row.points}</td>
+
+            </tr>
+        `
+    })
+}
+
+
+function updateStandingsTable(standings) {
 
     const table =
         document.getElementById(
@@ -46,7 +124,7 @@ function updateTeams(teams) {
 
     table.innerHTML = ""
 
-    teams.forEach((team, index) => {
+    standings.forEach((row, index) => {
 
         table.innerHTML += `
 
@@ -54,15 +132,17 @@ function updateTeams(teams) {
 
                 <td>${index + 1}</td>
 
-                <td>${team.name}</td>
+                <td>${row.name}</td>
 
-                <td>${team.wins}</td>
+                <td>${row.wins}</td>
 
-                <td>${team.draws}</td>
+                <td>${row.draws}</td>
 
-                <td>${team.losses}</td>
+                <td>${row.losses}</td>
 
-                <td>${team.points}</td>
+                <td>${row.points}</td>
+
+                <td>${row.goal_difference}</td>
 
             </tr>
         `
@@ -95,10 +175,6 @@ function updateTeamCards(teams) {
 
                         <p>
                             Спорт: ${team.sport || ""}
-                        </p>
-
-                        <p>
-                            Институт: ${team.institute || ""}
                         </p>
 
                     </div>

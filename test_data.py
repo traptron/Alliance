@@ -1,27 +1,44 @@
 from app import create_app, db
-from app.models import Institute, Team, Player
+from app.models import Team, Player, Sport, Tournament, Match
 
 app = create_app()
 
 with app.app_context():
 
-    # институт
-    institute = Institute(
-        name="ИТ",
-        points=10
+    # спорт
+    sport = Sport(
+        name="Football"
     )
 
-    db.session.add(institute)
+    db.session.add(sport)
     db.session.commit()
 
-    # команда
+    # турнир
+    tournament = Tournament(
+        name="Alliance League",
+        sport_id=sport.id,
+        season="2026",
+        status="active"
+    )
+
+    db.session.add(tournament)
+    db.session.commit()
+
+    # команды
     team = Team(
         name="IT Football",
-        sport="Football",
-        institute_id=institute.id
+        sport_id=sport.id,
+        tournament_id=tournament.id
+    )
+
+    team2 = Team(
+        name="Alliance United",
+        sport_id=sport.id,
+        tournament_id=tournament.id
     )
 
     db.session.add(team)
+    db.session.add(team2)
     db.session.commit()
 
     # игрок
@@ -33,6 +50,21 @@ with app.app_context():
     )
 
     db.session.add(player)
+    db.session.commit()
+
+    # матч
+    match = Match(
+        sport_id=sport.id,
+        tournament_id=tournament.id,
+        team1_id=team.id,
+        team2_id=team2.id,
+        score1=2,
+        score2=1,
+        status="finished",
+        date="2026-05-23"
+    )
+
+    db.session.add(match)
     db.session.commit()
 
     print("DONE")
