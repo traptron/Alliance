@@ -11,13 +11,20 @@ with app.app_context():
         "admin123"
     )
 
-    user = User(
-        username="admin",
-        password=hashed_password
-    )
+    user = User.query.filter_by(
+        username="admin"
+    ).first()
 
-    db.session.add(user)
+    if user is None:
+        user = User(
+            username="admin",
+            password=hashed_password
+        )
+
+        db.session.add(user)
+    else:
+        user.password = hashed_password
 
     db.session.commit()
 
-    print("Admin created!")
+    print("Admin created or updated!")

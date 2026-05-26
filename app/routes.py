@@ -8,9 +8,10 @@ from flask_login import (
 
 from werkzeug.security import check_password_hash
 
+from sqlalchemy import func
 from sqlalchemy.orm import joinedload
 
-from .models import Team, Match, Player, User, Tournament
+from .models import Team, Match, Player, User, Tournament, SportStatDefinition, PlayerStat
 
 main = Blueprint("main", __name__)
 
@@ -42,6 +43,7 @@ def home():
         teams = []
         matches = []
         players = []
+        top_players = []
     else:
         teams = Team.query.options(
             joinedload(Team.sport)
@@ -60,13 +62,8 @@ def home():
             Match.date.asc()
         ).all()
 
-        players = Player.query.join(Team).filter(
-            Team.tournament_id == tournament.id
-        ).order_by(
-            Player.goals.desc()
-        ).limit(5).all()
-
-        standings = build_standings(teams, matches)
+        standings = build_standings(teams, matches, tournament.sport)
+        top_players = build_top_players(tournament)
 
     return render_template(
         "index.html",
@@ -76,11 +73,16 @@ def home():
         standings=standings,
         teams=teams,
         matches=matches,
-        players=players,
+        players=top_players,
     )
 
 
-def build_standings(teams, matches):
+def build_standings(teams, matches, sport):
+
+    points_win = sport.points_win if sport else 3
+    points_draw = sport.points_draw if sport else 1
+    points_loss = sport.points_loss if sport else 0
+    tie_breakers = parse_tie_breakers(sport)
 
     standings = {}
 
@@ -118,16 +120,18 @@ def build_standings(teams, matches):
         if score1 > score2:
             team1["wins"] += 1
             team2["losses"] += 1
-            team1["points"] += 3
+            team1["points"] += points_win
+            team2["points"] += points_loss
         elif score2 > score1:
             team2["wins"] += 1
             team1["losses"] += 1
-            team2["points"] += 3
+            team2["points"] += points_win
+            team1["points"] += points_loss
         else:
             team1["draws"] += 1
             team2["draws"] += 1
-            team1["points"] += 1
-            team2["points"] += 1
+            team1["points"] += points_draw
+            team2["points"] += points_draw
 
     for row in standings.values():
         row["goal_difference"] = row["scored"] - row["conceded"]
@@ -135,16 +139,135 @@ def build_standings(teams, matches):
     standings_list = list(standings.values())
 
     standings_list.sort(
-        key=lambda row: (
-            -row["points"],
-            -row["wins"],
-            -row["goal_difference"],
-            -row["scored"],
-            row["team"].name
-        )
+        key=lambda row: build_standings_sort_key(row, tie_breakers)
     )
 
     return standings_list
+
+
+def parse_tie_breakers(sport):
+
+    default_order = [
+        "points",
+        "wins",
+        "goal_difference",
+        "scored"
+    ]
+
+    if not sport or not sport.tie_breakers:
+        return default_order
+
+    order = [
+        item.strip() for item in sport.tie_breakers.split(",")
+        if item.strip()
+    ]
+
+    return order or default_order
+
+
+def build_standings_sort_key(row, tie_breakers):
+
+    key = []
+
+    for breaker in tie_breakers:
+        if breaker == "team_name":
+            key.append(row["team"].name)
+        else:
+            key.append(-row.get(breaker, 0))
+
+    key.append(row["team"].name)
+    return tuple(key)
+
+
+def get_player_stat_totals(tournament_id, metric_key):
+
+    rows = (
+        PlayerStat.query
+        .with_entities(
+            Player.id.label("player_id"),
+            Player.name.label("player_name"),
+            Team.name.label("team_name"),
+            func.sum(PlayerStat.value).label("total")
+        )
+        .join(Player, PlayerStat.player_id == Player.id)
+        .join(Team, Player.team_id == Team.id)
+        .filter(
+            PlayerStat.tournament_id == tournament_id,
+            PlayerStat.metric_key == metric_key
+        )
+        .group_by(Player.id, Player.name, Team.name)
+        .all()
+    )
+
+    return {
+        row.player_id: {
+            "name": row.player_name,
+            "team": row.team_name,
+            "value": float(row.total or 0)
+        }
+        for row in rows
+    }
+
+
+def build_top_players(tournament):
+
+    sport = tournament.sport
+    if not sport:
+        return []
+
+    metric_defs = SportStatDefinition.query.filter_by(
+        sport_id=sport.id,
+        scope="player"
+    ).order_by(
+        SportStatDefinition.sort_priority.asc()
+    ).all()
+
+    label_map = {stat.metric_key: stat.label for stat in metric_defs}
+
+    sport_name = sport.name.lower()
+
+    if "basket" in sport_name:
+        points = get_player_stat_totals(tournament.id, "points")
+        games = get_player_stat_totals(tournament.id, "games")
+
+        players = []
+
+        for player_id, data in points.items():
+            game_count = games.get(player_id, {}).get("value", 0)
+            ppg = data["value"] / game_count if game_count else 0
+
+            players.append({
+                "name": data["name"],
+                "team": data["team"],
+                "primary_value": round(ppg, 2),
+                "primary_label": "PPG"
+            })
+
+        players.sort(
+            key=lambda row: row["primary_value"],
+            reverse=True
+        )
+
+        return players[:5]
+
+    goals = get_player_stat_totals(tournament.id, "goals")
+
+    players = [
+        {
+            "name": data["name"],
+            "team": data["team"],
+            "primary_value": int(data["value"]),
+            "primary_label": label_map.get("goals", "Голы")
+        }
+        for data in goals.values()
+    ]
+
+    players.sort(
+        key=lambda row: row["primary_value"],
+        reverse=True
+    )
+
+    return players[:5]
 
 @main.route("/api/tournament/<int:tournament_id>")
 def tournament_data(tournament_id):
@@ -177,13 +300,15 @@ def tournament_data(tournament_id):
         Match.date.asc()
     ).all()
 
-    players = Player.query.join(Team).filter(
-        Team.tournament_id == tournament.id
-    ).order_by(
-        Player.goals.desc()
-    ).limit(5).all()
+    standings = build_standings(teams, matches, tournament.sport)
+    top_players = build_top_players(tournament)
 
-    standings = build_standings(teams, matches)
+    stat_definitions = SportStatDefinition.query.filter_by(
+        sport_id=tournament.sport.id,
+        scope="player"
+    ).order_by(
+        SportStatDefinition.sort_priority.asc()
+    ).all() if tournament.sport else []
 
     return jsonify({
 
@@ -192,8 +317,24 @@ def tournament_data(tournament_id):
             "name": tournament.name,
             "season": tournament.season,
             "status": tournament.status,
-            "sport": tournament.sport.name if tournament.sport else None
+            "sport": tournament.sport.name if tournament.sport else None,
+            "rules": {
+                "points_win": tournament.sport.points_win if tournament.sport else 3,
+                "points_draw": tournament.sport.points_draw if tournament.sport else 1,
+                "points_loss": tournament.sport.points_loss if tournament.sport else 0,
+                "tie_breakers": parse_tie_breakers(tournament.sport)
+            }
         },
+
+        "stat_definitions": [
+            {
+                "metric_key": stat.metric_key,
+                "label": stat.label,
+                "unit": stat.unit,
+                "scope": stat.scope
+            }
+            for stat in stat_definitions
+        ],
 
         "standings": [
 
@@ -235,16 +376,7 @@ def tournament_data(tournament_id):
             for match in matches
         ],
 
-        "players": [
-
-            {
-                "name": player.name,
-                "goals": player.goals,
-                "team": player.team.name
-            }
-
-            for player in players
-        ]
+        "players": top_players
     })
 
 @main.route("/login", methods=["GET", "POST"])
