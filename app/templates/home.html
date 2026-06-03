@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="home-hero">
+    <img
+        src="{{ url_for('static', filename='img/logos/alliance-sublogo.png') }}"
+        class="home-hero-logo"
+        alt="ССК Альянс"
+    >
+    <div class="home-hero-subtitle">
+        ССК на базе ФГБОУ ВО «МИРЭА — Российский технологический университет»
+    </div>
+</div>
+
+<div class="page-shell">
+    <div class="section-header">
+        <h2 class="section-title">Ближайшие <span>турниры</span></h2>
+    </div>
+    <div class="cards-grid">
+        {% for tournament in tournaments[:3] %}
+        <div class="alliance-card">
+            <div class="card-title">{{ tournament.name }}</div>
+            <div class="card-sub">Сезон: {{ tournament.season or "—" }}</div>
+        </div>
+        {% endfor %}
+        {% if tournaments|length == 0 %}
+        <div class="section-card">Турниры пока не добавлены.</div>
+        {% endif %}
+    </div>
+
+    <div class="section-header">
+        <h2 class="section-title">Новости <span>клуба</span></h2>
+    </div>
+    <div class="cards-grid">
+        <div class="section-card">Скоро здесь появятся новости клуба и анонсы.</div>
+        <div class="section-card">Мы готовим подборку материалов о командах и турнирах.</div>
+        <div class="section-card">Следите за обновлениями — это заглушки.</div>
+    </div>
+
+</div>
+
+{% endblock %}

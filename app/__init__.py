@@ -29,11 +29,20 @@ def create_app():
     login_manager.login_view = "main.login"
 
     # импорт моделей
-    from .models import Team, Player, Match, Sport, Tournament
+    from .models import Team, Player, Match, Sport, Tournament, TournamentSport, TournamentRegistration, SportStatDefinition, MatchPlayerStat
 
     # Flask-Admin
 
-    from .admin import AdminModelView, TeamAdminView, MatchAdminView, TournamentAdminView
+    from .admin import (
+        AdminModelView,
+        TeamAdminView,
+        MatchAdminView,
+        TournamentAdminView,
+        TournamentSportAdminView,
+        TournamentRegistrationAdminView,
+        SportStatDefinitionAdminView,
+        MatchPlayerStatAdminView
+    )
 
     admin_site.init_app(app)
 
@@ -42,6 +51,14 @@ def create_app():
     admin_site.add_view(AdminModelView(Player, db.session))
 
     admin_site.add_view(TournamentAdminView(Tournament, db.session))
+
+    admin_site.add_view(TournamentSportAdminView(TournamentSport, db.session))
+
+    admin_site.add_view(TournamentRegistrationAdminView(TournamentRegistration, db.session))
+
+    admin_site.add_view(SportStatDefinitionAdminView(SportStatDefinition, db.session))
+
+    admin_site.add_view(MatchPlayerStatAdminView(MatchPlayerStat, db.session))
 
     admin_site.add_view(MatchAdminView(Match, db.session))
 

@@ -2,42 +2,41 @@
 
 {% block content %}
 
-<div class="hero text-center">
-
-    <h1 class="display-3 fw-bold">
-        ССК Альянс
-    </h1>
-
-    <p class="lead mt-3">
-        Студенческий спортивный клуб
-    </p>
-
+<!-- BRAND STRIP -->
+<div class="brand-strip animate-in">
+    <div class="brand-strip-content">
+        <img
+            src="{{ url_for('static', filename='img/logos/alliance-sublogo.png') }}"
+            class="brand-strip-logo"
+            alt="ССК Альянс"
+        >
+        <p class="brand-strip-sub">Турнирная таблица · Матчи · Статистика</p>
+    </div>
 </div>
 
-<div class="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-4">
-
-    <div>
-        <h1 class="mb-1">
-            Турнирная таблица
-        </h1>
-
-        <p class="text-muted mb-0">
-            Турнир: <span id="tournament-name">{{ tournament.name if tournament else "—" }}</span>
-        </p>
-
-        <p class="text-muted mb-0">
-            Сезон: <span id="tournament-season">{{ tournament.season if tournament else "—" }}</span>
-            · Статус: <span id="tournament-status">{{ tournament.status if tournament else "—" }}</span>
-            · Вид спорта: <span id="tournament-sport">{{ tournament.sport.name if tournament and tournament.sport else "—" }}</span>
-        </p>
+<!-- TOURNAMENT BAR -->
+<div class="tournament-bar animate-in">
+    <div class="tournament-meta">
+        <h2 id="tournament-name">{{ tournament.name if tournament else "—" }}</h2>
+        <div class="tournament-pills">
+            <span class="pill">
+                Сезон: <strong>{{ tournament.season if tournament else "—" }}</strong>
+            </span>
+            <span class="pill pill--active">
+                Статус: <strong id="tournament-status">{{ tournament.status if tournament else "—" }}</strong>
+            </span>
+            <span class="pill pill--sport">
+                Спорт: <strong id="tournament-sport">{{ tournament_sport.sport.name if tournament_sport and tournament_sport.sport else "—" }}</strong>
+            </span>
+            <span class="pill" style="display:none">
+                <strong id="tournament-season">{{ tournament.season if tournament else "" }}</strong>
+            </span>
+        </div>
     </div>
 
-    <div style="min-width: 260px;">
-        <label class="form-label mb-1" for="tournament-select">
-            Выбор турнира
-        </label>
-
-        <select class="form-select" id="tournament-select">
+    <div class="tournament-select-wrap">
+        <label for="tournament-select">ТУРНИР</label>
+        <select class="form-select-dark" id="tournament-select">
             {% for t in tournaments %}
             <option value="{{ t.id }}" {% if tournament and t.id == tournament.id %}selected{% endif %}>
                 {{ t.name }}{% if t.season %} · {{ t.season }}{% endif %}
@@ -46,230 +45,136 @@
         </select>
     </div>
 
+    <div class="tournament-select-wrap">
+        <label for="sport-select">ВИД СПОРТА</label>
+        <select class="form-select-dark" id="sport-select">
+            {% for ts in tournament_sports %}
+            <option value="{{ ts.id }}" {% if tournament_sport and ts.id == tournament_sport.id %}selected{% endif %}>
+                {{ ts.sport.name if ts.sport else "—" }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
 </div>
 
-<table class="table table-striped">
+<!-- FULL STANDINGS TABLE -->
+<div class="section-header">
+    <h2 class="section-title">Турнирная <span>таблица</span></h2>
+</div>
 
-    <thead>
+<div class="league-table-card animate-in">
+    <table class="alliance-table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Команда</th>
+                <th>W</th>
+                <th>D</th>
+                <th>L</th>
+                <th>PTS</th>
+                <th>GD</th>
+            </tr>
+        </thead>
+        <tbody id="teams-table">
+        {% for row in standings %}
+            <tr>
+                <td class="row-rank">{{ loop.index }}</td>
+                <td>
+                    <div class="team-cell">
+                        {% if row.team.logo %}
+                            <img src="{{ url_for('static', filename='uploads/' + row.team.logo) }}" class="team-logo" alt="">
+                        {% else %}
+                            <div class="team-logo-placeholder">{{ row.team.name[0] }}</div>
+                        {% endif %}
+                        <span class="team-name">{{ row.team.name }}</span>
+                    </div>
+                </td>
+                <td><span class="stat-val stat-val--pos">{{ row.wins }}</span></td>
+                <td><span class="stat-val">{{ row.draws }}</span></td>
+                <td><span class="stat-val stat-val--neg">{{ row.losses }}</span></td>
+                <td><span class="points-badge">{{ row.points }}</span></td>
+                <td>
+                    <span class="stat-val {% if row.goal_difference > 0 %}stat-val--pos{% elif row.goal_difference < 0 %}stat-val--neg{% endif %}">
+                        {% if row.goal_difference > 0 %}+{% endif %}{{ row.goal_difference }}
+                    </span>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
 
-        <tr>
-            <th>#</th>
-            <th>Команда</th>
-            <th>Очки</th>
-        </tr>
+<hr class="divider">
 
-    </thead>
+<!-- TEAMS -->
+<div class="section-header">
+    <h2 class="section-title"><span>Команды</span></h2>
+</div>
 
-    <tbody id="league-teams-table">
-
-    {% for row in standings %}
-
-        <tr>
-
-            <td>{{ loop.index }}</td>
-
-            <td>
-                {% if row.team.logo %}
-
-                <img
-                    src="{{ url_for('static',filename='uploads/' + row.team.logo) }}"
-                    width="40"
-                    height="40"
-                    class="rounded me-2"
-                 alt="">
-
-                {% endif %}
-                {{ row.team.name }}
-            </td>
-
-            <td>{{ row.points }}</td>
-
-        </tr>
-
-    {% endfor %}
-
-    </tbody>
-
-</table>
-
-<h2 class="mt-5">
-    Команды
-</h2>
-
-<div class="row" id="teams-list">
-
+<div class="cards-grid" id="teams-list">
 {% for team in teams %}
-
-<div class="col-md-4">
-
-    <div class="card mb-3">
-
-        <div class="card-body">
-
-            <h5>
-                {{ team.name }}
-            </h5>
-
-            <p>
-                Спорт: {{ tournament.sport.name if tournament and tournament.sport else "—" }}
-            </p>
-
+    <div class="alliance-card animate-in">
+        <div class="card-sport-tag">
+            {{ tournament_sport.sport.name if tournament_sport and tournament_sport.sport else "—" }}
         </div>
-
+        <div class="card-title">{{ team.name }}</div>
+        <div class="card-sub">Участник турнира</div>
     </div>
-
-</div>
-
 {% endfor %}
-
 </div>
 
-<h2 class="mt-5">
-    Ближайшие матчи
-</h2>
+<hr class="divider">
 
-<div class="row" id="matches-list">
+<!-- MATCHES -->
+<div class="section-header">
+    <h2 class="section-title"><span>Матчи</span></h2>
+</div>
 
+<div class="cards-grid" id="matches-list">
 {% for match in matches %}
-
-<div class="col-md-6">
-
-    <div class="card mb-3">
-
-        <div class="card-body">
-
-        <div class="d-flex justify-content-between">
-
-            <div>
-                <h5>
-                    {{ match.team1.name }}
-                </h5>
+    <div class="match-card animate-in">
+        <div class="match-teams">
+            <div class="match-team">
+                <div class="match-team-name">{{ match.team1.name }}</div>
             </div>
-
-            <div>
-                VS
+            <div class="match-score">
+                <div class="score-display">{{ match.score1 }}<span class="score-separator"> : </span>{{ match.score2 }}</div>
             </div>
-
-            <div>
-                <h5>
-                    {{ match.team2.name }}
-                </h5>
+            <div class="match-team">
+                <div class="match-team-name">{{ match.team2.name }}</div>
             </div>
-
         </div>
-
-        <hr>
-
-        <p>
-            {{ match.sport }}
-        </p>
-
-        <p>
-            {{ match.date }}
-        </p>
-
+        <div class="match-meta">
+            <span class="match-date">{{ match.date }}</span>
+            <span class="match-status {% if match.status == 'finished' %}match-status--finished{% else %}match-status--upcoming{% endif %}">
+                {{ match.status }}
+            </span>
         </div>
-
     </div>
-
-</div>
-
 {% endfor %}
-
 </div>
 
-<h2 class="mt-5 mb-4">
-   Топ игроки
-</h2>
+<hr class="divider">
 
-<div class="row" id="players-list">
+<!-- TOP PLAYERS -->
+<div class="section-header">
+    <h2 class="section-title">Топ <span>игроки</span></h2>
+</div>
 
+<div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 40px;" id="players-list">
 {% for player in players %}
-
-<div class="col-md-4">
-
-    <div class="card mb-3">
-
-        <div class="card-body">
-
-            <h5>
-                {{ player.name }}
-            </h5>
-
-            <p>
-                Команда:
-                {{ player.team.name }}
-            </p>
-
-            <p>
-                Голы:
-                {{ player.goals }}
-            </p>
-
+    <div class="player-card animate-in">
+        <div class="player-rank-badge player-rank-badge--{{ loop.index }}">{{ loop.index }}</div>
+        <div class="player-info">
+            <div class="player-name">{{ player.name }}</div>
+            <div class="player-team">{{ player.team }}</div>
+        </div>
+        <div class="player-goals">
+            <span class="goals-num">{{ player.primary_value if player.primary_value is not none else "—" }}</span>
+            <span class="goals-label">{{ player.primary_label or "" }}</span>
         </div>
     </div>
-
-</div>
-
 {% endfor %}
-
-</div>
-
-<h2 class="mt-5">
-    Таблица
-</h2>
-
-<table class="table">
-
-    <thead>
-
-        <tr>
-
-            <th>#</th>
-            <th>Команда</th>
-            <th>W</th>
-            <th>D</th>
-            <th>L</th>
-            <th>PTS</th>
-            <th>GD</th>
-
-        </tr>
-
-    </thead>
-
-    <tbody id="teams-table">
-
-    {% for row in standings %}
-
-        <tr>
-
-            <td>{{ loop.index }}</td>
-
-            <td>{{ row.team.name }}</td>
-
-            <td>{{ row.wins }}</td>
-
-            <td>{{ row.draws }}</td>
-
-            <td>{{ row.losses }}</td>
-
-            <td>
-                <strong>
-                    {{ row.points }}
-                </strong>
-            </td>
-
-            <td>{{ row.goal_difference }}</td>
-
-        </tr>
-
-    {% endfor %}
-
-    </tbody>
-
-</table>
-
 </div>
 
 {% endblock %}
-

@@ -1,72 +1,119 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-
     <meta charset="UTF-8">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ССК Альянс</title>
-
-    <link
-        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-        rel="stylesheet">
-
-    <link
-        rel="stylesheet"
-        href="{{ url_for('static', filename='css/style.css') }}"
-    >
-
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
-
 <body>
 
-<nav class="navbar navbar-expand-lg navbar-dark alliance-navbar">
+<!-- Ambient background grid -->
+<div class="bg-grid" aria-hidden="true"></div>
 
-    <div class="container">
-
-        <a class="navbar-brand d-flex align-items-center" href="/">
+<nav class="alliance-navbar">
+    <div class="nav-inner">
+        <a class="nav-brand" href="/">
             <img
                 src="{{ url_for('static', filename='img/logos/alliance-big-mono.png') }}"
-                class="navbar-logo me-2"
-                alt="ССК Альянс"
+                class="brand-logo"
+                alt="Альянс РТУ МИРЭА"
             >
-            ССК Альянс
+            <div class="brand-text">
+                <span class="brand-title">АЛЬЯНС РТУ МИРЭА</span>
+                <span class="brand-sub">СТУДЕНЧЕСКИЙ СПОРТИВНЫЙ КЛУБ</span>
+            </div>
         </a>
 
-        <div class="ms-auto">
+        <button class="nav-toggle" type="button" aria-label="Открыть меню" aria-expanded="false">
+            <img src="{{ url_for('static', filename='img/icons/menu.svg') }}" class="nav-toggle-icon" alt="">
+        </button>
+        <div class="nav-panel">
+            <div class="nav-panel-header">
+                <span class="nav-panel-title">Меню</span>
+                <div class="nav-actions nav-actions--mobile">
+                    {% if current_user.is_authenticated and current_user.username == "admin" %}
+                    <a href="/admin" class="nav-btn nav-btn--outline">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                        Admin
+                    </a>
+                    <a href="/logout" class="nav-btn nav-btn--solid">
+                        Выход
+                    </a>
+                    {% else %}
+                    <a href="{{ url_for('main.login') }}" class="nav-btn nav-btn--solid nav-btn--frame">
+                        <span class="nav-btn-text">Авторизоваться</span>
+                    </a>
+                    {% endif %}
+                </div>
+                <button class="nav-close" type="button" aria-label="Закрыть меню">
+                    <span class="nav-close-line"></span>
+                    <span class="nav-close-line"></span>
+                </button>
+            </div>
+            <div class="nav-menu">
+                <a class="nav-link {% if request.path == '/' %}nav-link--active{% endif %}" href="{{ url_for('main.home') }}">
+                    <span>Главная</span>
+                    <span class="nav-link-arrow">›</span>
+                </a>
+                <a class="nav-link {% if request.path.startswith('/tournaments') %}nav-link--active{% endif %}" href="{{ url_for('main.tournaments') }}">
+                    <span>Турниры</span>
+                    <span class="nav-link-arrow">›</span>
+                </a>
+                <a class="nav-link {% if request.path.startswith('/teams') %}nav-link--active{% endif %}" href="{{ url_for('main.teams') }}">
+                    <span>Команды</span>
+                    <span class="nav-link-arrow">›</span>
+                </a>
+                <a class="nav-link {% if request.path.startswith('/players') %}nav-link--active{% endif %}" href="{{ url_for('main.players') }}">
+                    <span>Игроки</span>
+                    <span class="nav-link-arrow">›</span>
+                </a>
+                <a class="nav-link {% if request.path.startswith('/schedule') %}nav-link--active{% endif %}" href="{{ url_for('main.schedule') }}">
+                    <span>Расписание</span>
+                    <span class="nav-link-arrow">›</span>
+                </a>
+                <a class="nav-link {% if request.path.startswith('/media') %}nav-link--active{% endif %}" href="{{ url_for('main.media') }}">
+                    <span>Медиа</span>
+                    <span class="nav-link-arrow">›</span>
+                </a>
+                <a class="nav-link {% if request.path.startswith('/about') %}nav-link--active{% endif %}" href="{{ url_for('main.about') }}">
+                    <span>О проекте</span>
+                    <span class="nav-link-arrow">›</span>
+                </a>
+            </div>
 
-            <a
-                href="/admin"
-                class="btn btn-outline-light me-2"
-            >
-                Admin
-            </a>
-
-            <a
-                href="/logout"
-                class="btn btn-light"
-            >
-                Logout
-            </a>
-
+            <div class="nav-actions nav-actions--desktop">
+                {% if current_user.is_authenticated and current_user.username == "admin" %}
+                <a href="/admin" class="nav-btn nav-btn--outline">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                    Admin
+                </a>
+                <a href="/logout" class="nav-btn nav-btn--solid">
+                    Выход
+                </a>
+                {% else %}
+                <a href="{{ url_for('main.login') }}" class="nav-btn nav-btn--solid nav-btn--frame">
+                    <span class="nav-btn-text">Авторизоваться</span>
+                </a>
+                {% endif %}
+            </div>
         </div>
-
     </div>
-
 </nav>
 
-<div class="container mt-4">
-
+<main class="page-content">
     {% block content %}
     {% endblock %}
+</main>
 
-</div>
+<footer class="site-footer">
+    <div class="footer-inner">
+        <span class="footer-brand">ССК АЛЬЯНС</span>
+        <span class="footer-year">© 2026</span>
+    </div>
+</footer>
 
-<script
-    src="{{ url_for(
-        'static',
-        filename='js/main.js'
-    ) }}"
-></script>
-
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>
